@@ -28,7 +28,7 @@ I plan on making this more modular and complex soon. Will be splitting the agent
    python -m venv venv
    source venv/bin/activate
 
-   On Windows use `venv\Scriptsctivate`
+   On Windows use `venv\Scripts\activate`
    ```
 
 3. **Install Required Packages**:
