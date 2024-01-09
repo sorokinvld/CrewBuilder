@@ -26,7 +26,9 @@ I plan on making this more modular and complex soon. Will be splitting the agent
 2. **Create and Activate a Virtual Environment** (Optional but recommended):
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scriptsctivate`
+   source venv/bin/activate
+
+   On Windows use `venv\Scriptsctivate`
    ```
 
 3. **Install Required Packages**:
