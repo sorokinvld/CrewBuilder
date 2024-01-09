@@ -19,7 +19,7 @@ I plan on making this more modular and complex soon. Will be splitting the agent
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-repository-url.git
+   git clone https://github.com/JimJim12/CrewBuilder.git
    cd your-repository-directory
    ```
 
