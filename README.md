@@ -20,7 +20,7 @@ I plan on making this more modular and complex soon. Will be splitting the agent
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/JimJim12/CrewBuilder.git
-   cd your-repository-directory
+   cd CrewBuilder
    ```
 
 2. **Create and Activate a Virtual Environment** (Optional but recommended):
