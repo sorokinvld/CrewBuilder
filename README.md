@@ -37,56 +37,63 @@ I plan on making this more modular and complex soon. Will be splitting the agent
 
    ```   
 
-4.   **Dify can be installed as a local server following their docs**:
-      ```bash
-   https://docs.dify.ai/getting-started/install-self-hosted
 
-   One of the dependencies might be broken depending on your environment. trio broke so i had to fix it by editing /lib/python3.10/site-packages/trio/_core/_io_epoll.p
+4. **Dify can be installed as a local server following their docs**:
+    ```bash
+    https://docs.dify.ai/getting-started/install-self-hosted
 
-   in _io_epoll.p change the import from 'import select' to 'from select import epoll', then change line 187-199
+    One of the dependencies might be broken depending on your environment. 
+    Trio broke so I had to fix it by editing /lib/python3.10/site-packages/trio/_core/_io_epoll.py
 
-   FROM
+    In _io_epoll.py change the import from 'import select' to 'from select import epoll', 
+    then change lines 187-199
 
-   @attr.s(slots=True, eq=False, hash=False)
-   class EpollIOManager:
-      _epoll = attr.ib(factory=select.epoll)
-      # {fd: EpollWaiters}
-      _registered = attr.ib(
-         factory=lambda: defaultdict(EpollWaiters), type=Dict[int, EpollWaiters]
-      )
-      _force_wakeup = attr.ib(factory=WakeupSocketpair)
-      _force_wakeup_fd = attr.ib(default=None)
+    FROM:
+    ```
+    ```python
+    @attr.s(slots=True, eq=False, hash=False)
+    class EpollIOManager:
+        _epoll = attr.ib(factory=select.epoll)
+        # {fd: EpollWaiters}
+        _registered = attr.ib(
+            factory=lambda: defaultdict(EpollWaiters), type=Dict[int, EpollWaiters]
+        )
+        _force_wakeup = attr.ib(factory=WakeupSocketpair)
+        _force_wakeup_fd = attr.ib(default=None)
 
-      def __attrs_post_init__(self):
-         self._epoll.register(self._force_wakeup.wakeup_sock, select.EPOLLIN)
-         self._force_wakeup_fd = self._force_wakeup.wakeup_sock.fileno()
+        def __attrs_post_init__(self):
+            self._epoll.register(self._force_wakeup.wakeup_sock, select.EPOLLIN)
+            self._force_wakeup_fd = self._force_wakeup.wakeup_sock.fileno()
+    ```
+    ```
+    TO:
+    ```
+    ```python
+    @attr.s(slots=True, eq=False, hash=False)
+    class EpollIOManager:
+        if hasattr(select, 'epoll'):
+            _epoll = attr.ib(factory=select.epoll)
+            _force_wakeup: WakeupSocketpair = attr.ib(factory=WakeupSocketpair)
+            _force_wakeup_fd: int | None = attr.ib(default=None)
 
+            def __attrs_post_init__(self) -> None:
+                self._epoll.register(self._force_wakeup.wakeup_sock, select.EPOLLIN)
+                self._force_wakeup_fd = self._force_wakeup.wakeup_sock.fileno()
+        else:
+            _epoll = attr.ib(default=None)
+            _registered: defaultdict[int, EpollWaiters] = attr.ib(
+                factory=lambda: defaultdict(EpollWaiters)
+            )
+            _force_wakeup: WakeupSocketpair = attr.ib(factory=WakeupSocketpair)
+            _force_wakeup_fd: int | None = attr.ib(default=None)
 
-   TO 
+            def __attrs_post_init__(self) -> None:
+                raise NotImplementedError("Epoll is not available on this platform")
+    ```
+    ```
+    Now you can run the DB import from Dify docs
+    ```
 
-   @attr.s(slots=True, eq=False, hash=False)
-   class EpollIOManager:
-      if hasattr(select, 'epoll'):
-         _epoll = attr.ib(factory=select.epoll)
-         _force_wakeup: WakeupSocketpair = attr.ib(factory=WakeupSocketpair)
-         _force_wakeup_fd: int | None = attr.ib(default=None)
-
-         def __attrs_post_init__(self) -> None:
-               self._epoll.register(self._force_wakeup.wakeup_sock, select.EPOLLIN)
-               self._force_wakeup_fd = self._force_wakeup.wakeup_sock.fileno()
-      else:
-         _epoll = attr.ib(default=None)
-         _registered: defaultdict[int, EpollWaiters] = attr.ib(
-         factory=lambda: defaultdict(EpollWaiters)
-      )
-      _force_wakeup: WakeupSocketpair = attr.ib(factory=WakeupSocketpair)
-      _force_wakeup_fd: int | None = attr.ib(default=None)
-
-      def __attrs_post_init__(self) -> None:
-         raise NotImplementedError("Epoll is not available on this platform")
-
-   Now you can run the DB import from Dify docs         
-   ```
 
 5. **Set Up Environment Variables**:
    Create a `.env` file in the project root directory and add your OpenAI API key:
