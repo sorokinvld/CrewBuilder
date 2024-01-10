@@ -45,10 +45,8 @@ I plan on making this more modular and complex soon. Will be splitting the agent
 
    in _io_epoll.p change the import from 'import select' to 'from select import epoll', then change line 187-199
 
-   ```
-
    FROM
-      ```bash
+
    @attr.s(slots=True, eq=False, hash=False)
    class EpollIOManager:
       _epoll = attr.ib(factory=select.epoll)
@@ -62,11 +60,10 @@ I plan on making this more modular and complex soon. Will be splitting the agent
       def __attrs_post_init__(self):
          self._epoll.register(self._force_wakeup.wakeup_sock, select.EPOLLIN)
          self._force_wakeup_fd = self._force_wakeup.wakeup_sock.fileno()
-   ```
+
 
    TO 
 
-    ```bash
    @attr.s(slots=True, eq=False, hash=False)
    class EpollIOManager:
       if hasattr(select, 'epoll'):
@@ -87,9 +84,9 @@ I plan on making this more modular and complex soon. Will be splitting the agent
 
       def __attrs_post_init__(self) -> None:
          raise NotImplementedError("Epoll is not available on this platform")
-   ```
+
    Now you can run the DB import from Dify docs         
-   
+   ```
 
 5. **Set Up Environment Variables**:
    Create a `.env` file in the project root directory and add your OpenAI API key:
