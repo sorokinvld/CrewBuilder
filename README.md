@@ -12,7 +12,7 @@ I plan on making this more modular and complex soon. Will be splitting the agent
 - Python 3.10 or higher
 - Flask
 - CrewAI
-- Dify https://docs.dify.ai/getting-started/install-self-hosted
+- Dify
 - An OpenAI API key
 
 ### Installation Steps
@@ -35,14 +35,15 @@ I plan on making this more modular and complex soon. Will be splitting the agent
    ```bash
    pip install flask crewai langchain requests python-dotenv
 
-   Dify can be installed following their docs.
+   Dify can be installed as a local server following their docs:
+   https://docs.dify.ai/getting-started/install-self-hosted
    ```
 
 4. **Set Up Environment Variables**:
    Create a `.env` file in the project root directory and add your OpenAI API key:
    ```plaintext
    OPENAI_API_KEY=your_openai_api_key_here
-   PROJECT_FOLDER_PATH=your_project_folder_path_here
+   PROJECT_FOLDER_PATH=/your/project/folder/path/here
    ```
 
 5. **Run the Flask Application**:

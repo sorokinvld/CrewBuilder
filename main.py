@@ -2,18 +2,20 @@ from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI, OpenAI
 from flask import Flask, request, jsonify
 from langchain.agents import load_tools
-from langchain.tools import HumanInputRun
+from langchain.tools import HumanInputRun, ShellTool, BearlyInterpreterTool
+from langchain_community.utilities import BingSearchAPIWrapper
 from dotenv import load_dotenv
 from pathlib import Path
 from dify import dify
 import requests, logging, json, os
-
 
 # Load configurations from .env file
 load_dotenv()
 project_folder = Path(os.getenv('PROJECT_FOLDER_PATH', '/default/path/to/working/directory'))
 openai_api_key = os.getenv('OPENAI_API_KEY')
 os.environ["OPENAI_API_KEY"] = openai_api_key
+bing_subscription_key = os.getenv('BING_SUBSCRIPTION_KEY')
+bearly_api_key = os.getenv('BEARLY_API_KEY')
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +28,11 @@ def get_chat_input(user_message) -> str:
 # Load tools with the human input function
 llm = ChatOpenAI(temperature=0.0)
 human_tool = HumanInputRun(input_func=get_chat_input)
+# Obviously shouldn't need to tell you to be careful with this. Run this crew in a docker container if you can.
+shell_tool = ShellTool()
+# I'm using bing but use whatever search tool you want.
+bing_search = BingSearchAPIWrapper(subscription_key=bing_subscription_key)
+bearly_tool = BearlyInterpreterTool(api_key=bearly_api_key)
 tools = load_tools(["human", "llm-math"], llm=llm, input_func=get_chat_input)
 
 # Initialize CrewAI agents
@@ -46,6 +53,7 @@ project_def_agent = Agent(
     This agent serves as the foundation for the CrewAI crew, transforming initial ideas into structured project plans.""",
     verbose=True,
     llm='gpt-4',
+    tools = tools
     allow_delegation=False
 )
 
@@ -72,6 +80,7 @@ agent_list_agent = Agent(
     backstory='An expert in agent role analysis, this agent plays a critical role in assembling the right mix of skills and functionalities required for the successful deployment of the CrewAI crew.',
     verbose=True,
     llm='gpt-4',
+    tools = [tools, bing_search, bearly_tool],
     allow_delegation=False
 )
 
@@ -98,6 +107,7 @@ task_list_agent = Agent(
     """,
     verbose=True,
     llm='gpt-4',
+    tools = [tools, bing_search, bearly_tool],
     allow_delegation=False
 )
     backstory="""
@@ -123,6 +133,7 @@ compiler_agent = Agent(
     backstory='Specializing in the final assembly and verification of CrewAI applications, this agent ensures that all components are correctly integrated and packaged, delivering a complete and functional application to the user.',
     verbose=True,
     llm='gpt-4',
+    tools = [tools, shell_tool, bing_search, bearly_tool]
     allow_delegation=False
 )
 
@@ -134,7 +145,6 @@ project_definition_task = Task(
     to form the foundation of the CrewAI application then Pass this information to the next agent
     """,
     agent=project_def_agent,
-    tools=["NLP_Parsing_Tool"]
 )
 
 agent_list_task = Task(
@@ -164,7 +174,7 @@ agent_list_task = Task(
     
     """,
     agent=agent_list_agent,
-    tools=["Agent_Analysis_Tool"]
+    tools=[tools, bing_search, bearly_tool]
 ).",
 
 task_list_task = Task(
@@ -188,7 +198,7 @@ task_list_task = Task(
     Complete your task and pass the list of tasks, the list of agents, and the project info to the next agent.
     """,
     agent=task_list_agent,
-    tools=["Task_Organization_Tool"]
+    tools=[tools, bing_search, bearly_tool]
 )
 
 compiler_task = Task(
@@ -319,7 +329,7 @@ compiler_task = Task(
 
     """,
     agent=compiler_agent,
-    tools=["File_Generation_Tool"]
+    tools=[tools, shell_tool, bing_search, bearly_tool]
 )
 
 # Assemble the CrewAI crew
@@ -356,7 +366,6 @@ def chat_with_project():
         data = request.json
         user_message = data.get('message')
         conversation_id = data.get('conversation_id', 'default-conversation-id')
-
 
         # Dynamically select the agent based on the current stage and pass the user message
         if current_stage == 'initial_prompt':
