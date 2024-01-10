@@ -47,7 +47,7 @@ I plan on making this more modular and complex soon. Will be splitting the agent
 
 5. **Run the Flask Application**:
    ```bash
-   python app.py  # Replace `app.py` with your main Python script name
+   python main.py
    ```
 
 ## Usage
